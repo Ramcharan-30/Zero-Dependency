@@ -5,6 +5,7 @@ from .rle import RleCodec
 from .zlib_codec import ZlibCodec
 from .lzma_codec import LzmaCodec
 from .zstd_codec import ZstdCodec, ZSTD_AVAILABLE
+from .bz2_codec import Bz2Codec
 
 def get_codec(algorithm_id: int) -> BaseCodec:
     codecs = {
@@ -13,7 +14,8 @@ def get_codec(algorithm_id: int) -> BaseCodec:
         2: RleCodec,
         3: ZlibCodec,
         4: LzmaCodec,
-        5: ZstdCodec
+        5: ZstdCodec,
+        6: Bz2Codec
     }
     if algorithm_id not in codecs:
         raise ValueError(f"Unknown algorithm ID: {algorithm_id}")
@@ -23,8 +25,23 @@ def get_all_codecs() -> list[BaseCodec]:
     return [
         ZstdCodec(),
         LzmaCodec(),
+        Bz2Codec(),
         ZlibCodec(),
         HuffmanCodec(),
         RleCodec(),
         StoreCodec()
     ]
+
+__all__ = [
+    "BaseCodec",
+    "StoreCodec",
+    "HuffmanCodec",
+    "RleCodec",
+    "ZlibCodec",
+    "LzmaCodec",
+    "ZstdCodec",
+    "Bz2Codec",
+    "ZSTD_AVAILABLE",
+    "get_codec",
+    "get_all_codecs"
+]
