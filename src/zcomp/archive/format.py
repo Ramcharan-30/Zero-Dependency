@@ -42,6 +42,10 @@ class ArchiveHeader:
         self.filename = filename
         self.transform_meta = transform_meta
 
+def compute_archive_size(name_bytes_len: int, meta_len: int, payload_len: int) -> int:
+    """Computes the total archive size without allocating any bytes."""
+    return HEADER_SIZE + name_bytes_len + 4 + meta_len + payload_len
+
 def serialize_archive(
     filename: str,
     original_data: bytes,
@@ -50,14 +54,21 @@ def serialize_archive(
     codec_id: int,
     codec_level: int,
     transform_meta: bytes,
-    payload: bytes
+    payload: bytes,
+    *,
+    precomputed_crc32: int | None = None,
+    precomputed_sha256: bytes | None = None
 ) -> bytes:
-    """Serializes file data and metadata into complete .ZC archive bytes."""
+    """Serializes file data and metadata into complete .ZC archive bytes.
+
+    Accepts optional precomputed checksums to avoid redundant hashing
+    when the same original_data is serialized across multiple candidates.
+    """
     orig_size = len(original_data)
     payload_size = len(payload)
-    crc32_val = compute_crc32(original_data)
-    sha256_val = compute_sha256(original_data)
-    
+    crc32_val = precomputed_crc32 if precomputed_crc32 is not None else compute_crc32(original_data)
+    sha256_val = precomputed_sha256 if precomputed_sha256 is not None else compute_sha256(original_data)
+
     name_bytes = Path(filename).name.encode('utf-8')
     name_len = len(name_bytes)
     flags = 0

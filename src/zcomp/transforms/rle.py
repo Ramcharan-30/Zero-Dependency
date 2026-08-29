@@ -20,16 +20,20 @@ class RleTransform(BaseTransform):
         out = bytearray()
         i = 0
         n = len(data)
-        
+
+        # Use an index pointer instead of re-slicing bytearray on flush
         literal_buf = bytearray()
+        lit_start = 0
 
         def flush_literals():
-            nonlocal literal_buf
-            while literal_buf:
-                chunk_len = min(len(literal_buf), 127)
+            nonlocal lit_start
+            while lit_start < len(literal_buf):
+                chunk_len = min(len(literal_buf) - lit_start, 127)
                 out.append(chunk_len)
-                out.extend(literal_buf[:chunk_len])
-                literal_buf = literal_buf[chunk_len:]
+                out.extend(literal_buf[lit_start : lit_start + chunk_len])
+                lit_start += chunk_len
+            literal_buf.clear()
+            lit_start = 0
 
         while i < n:
             # Check for run of same byte starting at i
@@ -48,7 +52,7 @@ class RleTransform(BaseTransform):
             else:
                 literal_buf.append(data[i])
                 i += 1
-                if len(literal_buf) >= 127:
+                if len(literal_buf) - lit_start >= 127:
                     flush_literals()
 
         flush_literals()
@@ -67,7 +71,7 @@ class RleTransform(BaseTransform):
             i += 1
             is_run = bool(header & 0x80)
             length = header & 0x7F
-            
+
             if length == 0:
                 raise ValueError("Corrupt RLE transform data: zero length header")
 
@@ -76,7 +80,7 @@ class RleTransform(BaseTransform):
                     raise ValueError("Truncated RLE transform data in run payload")
                 run_byte = transformed_data[i]
                 i += 1
-                out.extend([run_byte] * length)
+                out.extend(bytes([run_byte]) * length)
             else:
                 if i + length > n:
                     raise ValueError("Truncated RLE transform data in literal payload")

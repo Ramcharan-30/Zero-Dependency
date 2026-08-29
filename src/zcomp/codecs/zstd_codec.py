@@ -1,5 +1,4 @@
 from .base import BaseCodec
-import sys
 
 try:
     import compression.zstd as zstd

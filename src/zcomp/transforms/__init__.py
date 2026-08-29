@@ -3,6 +3,7 @@ from .identity import IdentityTransform
 from .delta import Delta8Transform
 from .rle import RleTransform
 from .shuffle import Shuffle32Transform, Shuffle64Transform
+from .mesh import MeshTransform
 
 def get_transform(transform_id: int) -> BaseTransform:
     transforms = {
@@ -10,7 +11,8 @@ def get_transform(transform_id: int) -> BaseTransform:
         1: Delta8Transform,
         2: RleTransform,
         3: Shuffle32Transform,
-        4: Shuffle64Transform
+        4: Shuffle64Transform,
+        5: MeshTransform
     }
     if transform_id not in transforms:
         raise ValueError(f"Unknown transform ID: {transform_id}")
@@ -22,7 +24,8 @@ def get_all_transforms() -> list[BaseTransform]:
         Delta8Transform(),
         RleTransform(),
         Shuffle32Transform(),
-        Shuffle64Transform()
+        Shuffle64Transform(),
+        MeshTransform()
     ]
 
 __all__ = [
@@ -32,6 +35,7 @@ __all__ = [
     "RleTransform",
     "Shuffle32Transform",
     "Shuffle64Transform",
+    "MeshTransform",
     "get_transform",
     "get_all_transforms"
 ]

@@ -1,9 +1,11 @@
 import struct
+from pathlib import Path
 from dataclasses import dataclass
 from ..profiler import ContentProfile
 from ..transforms import BaseTransform, IdentityTransform
 from ..codecs import BaseCodec, StoreCodec
-from ..archive import serialize_archive
+from ..archive import serialize_archive, compute_archive_size
+from ..verification import compute_crc32, compute_sha256
 from .candidates import generate_candidates
 
 @dataclass
@@ -48,22 +50,33 @@ def select_best_candidate(
     profile_id: int = 255
 ) -> CandidateSelectionResult:
     """
-    Evaluates candidate (Transform, Codec) pairs by building complete .ZC archives and measuring final sizes.
-    Selects the candidate that produces the SMALLEST VALID COMPLETE .ZC ARCHIVE.
-    If no candidate reduces archive size compared to STORE, STORE is selected.
+    Evaluates candidate (Transform, Codec) pairs by computing .ZC archive sizes
+    and selects the candidate that produces the SMALLEST VALID COMPLETE .ZC ARCHIVE.
+
+    Optimized: checksums are computed once and archive sizes are calculated
+    arithmetically. Only the winning candidate is fully serialized.
     """
     candidates = generate_candidates(profile)
     evaluations: list[CandidateEvaluation] = []
-    
-    best_bytes: bytes | None = None
+
+    # Pre-compute checksums ONCE (was previously recomputed per candidate)
+    cached_crc32 = compute_crc32(data)
+    cached_sha256 = compute_sha256(data)
+
+    # Pre-compute the filename bytes length (constant across candidates)
+    name_bytes_len = len(Path(original_filename).name.encode('utf-8'))
+
     best_transform: BaseTransform | None = None
     best_codec: BaseCodec | None = None
     best_size = float('inf')
+    best_meta: bytes | None = None
+    best_payload: bytes | None = None
 
-    store_bytes: bytes | None = None
     store_transform: BaseTransform | None = None
     store_codec: BaseCodec | None = None
     store_size = float('inf')
+    store_meta: bytes | None = None
+    store_payload: bytes | None = None
 
     for transform, codec in candidates:
         try:
@@ -73,21 +86,10 @@ def select_best_candidate(
             codec_meta, payload = codec.compress(transformed_data)
             # 3. Combine metadata
             full_meta = pack_combined_metadata(trans_meta, codec_meta)
-            
-            # 4. Build complete .ZC serialization
-            archive_bytes = serialize_archive(
-                filename=original_filename,
-                original_data=data,
-                profile_id=profile_id,
-                transform_id=transform.transform_id,
-                codec_id=codec.algorithm_id,
-                codec_level=0,
-                transform_meta=full_meta,
-                payload=payload
-            )
-            
-            arc_size = len(archive_bytes)
-            
+
+            # 4. Compute archive size arithmetically (no allocation)
+            arc_size = compute_archive_size(name_bytes_len, len(full_meta), len(payload))
+
             label = codec.__class__.__name__.replace('Codec', '')
             if transform.transform_id != 0:
                 label = f"{transform.name} + {label}"
@@ -100,28 +102,45 @@ def select_best_candidate(
             ))
 
             if isinstance(transform, IdentityTransform) and isinstance(codec, StoreCodec):
-                store_bytes = archive_bytes
                 store_transform = transform
                 store_codec = codec
                 store_size = arc_size
+                store_meta = full_meta
+                store_payload = payload
 
             # Deterministic tie-breaking: strictly smaller size wins
             if arc_size < best_size:
                 best_size = arc_size
-                best_bytes = archive_bytes
                 best_transform = transform
                 best_codec = codec
+                best_meta = full_meta
+                best_payload = payload
 
         except Exception:
             # Skip invalid/failing candidate
             continue
 
     # Fallback to STORE if no compressed archive is strictly smaller than STORE
-    if best_bytes is None or best_size >= store_size:
-        best_bytes = store_bytes
+    if best_transform is None or best_size >= store_size:
         best_transform = store_transform
         best_codec = store_codec
         best_size = store_size
+        best_meta = store_meta
+        best_payload = store_payload
+
+    # Only serialize the WINNER (was previously serialized for every candidate)
+    best_bytes = serialize_archive(
+        filename=original_filename,
+        original_data=data,
+        profile_id=profile_id,
+        transform_id=best_transform.transform_id,
+        codec_id=best_codec.algorithm_id,
+        codec_level=0,
+        transform_meta=best_meta,
+        payload=best_payload,
+        precomputed_crc32=cached_crc32,
+        precomputed_sha256=cached_sha256
+    )
 
     # Mark winner in evaluations list
     best_label = best_codec.__class__.__name__.replace('Codec', '')
