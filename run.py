@@ -1,10 +1,10 @@
 """
 Zero-Compress - Lossless File Tool
 """
-import unittest
+from src.zcomp import app
 
 def main():
-    print("Zero-Compress starting...")
+    app.run()
 
 if __name__ == "__main__":
     main()
