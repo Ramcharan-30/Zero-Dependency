@@ -1,7 +1,8 @@
 import collections
 import heapq
 import struct
-from .bitio import BitWriter, BitReader
+from .base import BaseCodec
+from ..bitio import BitWriter, BitReader
 
 class HuffmanNode:
     def __init__(self, char=None, freq=0, left=None, right=None):
@@ -71,54 +72,60 @@ def deserialize_tree(data_iter):
     except StopIteration:
         return None
 
-def compress(data: bytes) -> tuple[bytes, bytes]:
-    if not data:
-        return b"", b""
-        
-    freqs = collections.Counter(data)
-    root = build_tree(freqs)
-    codes = generate_codes(root)
-    
-    tree_data = serialize_tree(root)
-    
-    writer = BitWriter()
-    for byte in data:
-        for bit in codes[byte]:
-            writer.write_bit(int(bit))
-            
-    padding_bits = (8 - writer.bit_count) % 8
-    meta = struct.pack("!B", padding_bits) + tree_data
-    
-    return meta, writer.flush()
 
-def decompress(meta: bytes, payload: bytes) -> bytes:
-    if not meta and not payload:
-        return b""
-        
-    padding_bits = meta[0]
-    tree_data = meta[1:]
-    
-    data_iter = iter(tree_data)
-    root = deserialize_tree(data_iter)
-    
-    if root is None:
-        return b""
-        
-    reader = BitReader(payload)
-    out = bytearray()
-    
-    node = root
-    total_bits = len(payload) * 8 - padding_bits
-    
-    for _ in range(total_bits):
-        bit = reader.read_bit()
-        if bit == 0:
-            node = node.left
-        else:
-            node = node.right
+class HuffmanCodec(BaseCodec):
+    @property
+    def algorithm_id(self) -> int:
+        return 1
+
+    def compress(self, data: bytes) -> tuple[bytes, bytes]:
+        if not data:
+            return b"", b""
             
-        if node.char is not None:
-            out.append(node.char)
-            node = root
+        freqs = collections.Counter(data)
+        root = build_tree(freqs)
+        codes = generate_codes(root)
+        
+        tree_data = serialize_tree(root)
+        
+        writer = BitWriter()
+        for byte in data:
+            for bit in codes[byte]:
+                writer.write_bit(int(bit))
+                
+        padding_bits = (8 - writer.bit_count) % 8
+        meta = struct.pack("!B", padding_bits) + tree_data
+        
+        return meta, writer.flush()
+
+    def decompress(self, meta: bytes, payload: bytes) -> bytes:
+        if not meta and not payload:
+            return b""
             
-    return bytes(out)
+        padding_bits = meta[0]
+        tree_data = meta[1:]
+        
+        data_iter = iter(tree_data)
+        root = deserialize_tree(data_iter)
+        
+        if root is None:
+            return b""
+            
+        reader = BitReader(payload)
+        out = bytearray()
+        
+        node = root
+        total_bits = len(payload) * 8 - padding_bits
+        
+        for _ in range(total_bits):
+            bit = reader.read_bit()
+            if bit == 0:
+                node = node.left
+            else:
+                node = node.right
+                
+            if node.char is not None:
+                out.append(node.char)
+                node = root
+                
+        return bytes(out)
