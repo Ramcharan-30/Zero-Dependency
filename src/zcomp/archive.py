@@ -1,90 +1,107 @@
 import struct
 import zlib
 from pathlib import Path
-from . import huffman
-from . import rle
 from .errors import ArchiveValidationError
+from .profiles import Profile
+from .strategy import select_best_codec
+from .codecs import get_codec
 
 MAGIC = b"ZCMP"
-VERSION = 1
+VERSION = 2
 
-ALG_HUFFMAN = 1
-ALG_RLE = 2
-
-# MAGIC(4), VERSION(2), ALG_ID(2), ORIG_SIZE(8), ORIG_CRC(4), META_SIZE(4), NAME_LEN(2)
-HEADER_STRUCT = "!4s H H Q I I H"
+# MAGIC(4), VERSION(2), FILE_TYPE(1), ALG_ID(1), FLAGS(1), ORIG_SIZE(8), ORIG_CRC(4), NAME_LEN(2)
+HEADER_STRUCT = "!4s H B B B Q I H"
 HEADER_SIZE = struct.calcsize(HEADER_STRUCT)
 
-def create_archive(original_path: Path, data: bytes, algorithm: int = ALG_HUFFMAN) -> bytes:
+def create_archive(original_path: Path, data: bytes, profile_id: int) -> tuple[bytes, int]:
+    """Returns (archive_bytes, algorithm_id_used)"""
     orig_size = len(data)
     orig_crc = zlib.crc32(data) & 0xFFFFFFFF
     
     name_bytes = original_path.name.encode('utf-8')
     name_len = len(name_bytes)
     
-    if algorithm == ALG_HUFFMAN:
-        meta, payload = huffman.compress(data)
-    elif algorithm == ALG_RLE:
-        meta, payload = rle.compress(data)
-    else:
-        raise ValueError(f"Unknown algorithm: {algorithm}")
-        
+    best_codec, meta, payload = select_best_codec(data, profile_id)
+    algorithm_id = best_codec.algorithm_id
+    
+    flags = 0
     meta_size = len(meta)
+    payload_size = len(payload)
     
     header = struct.pack(
         HEADER_STRUCT,
         MAGIC,
         VERSION,
-        algorithm,
+        profile_id,
+        algorithm_id,
+        flags,
         orig_size,
         orig_crc,
-        meta_size,
         name_len
     )
     
-    return header + name_bytes + meta + payload
+    archive = bytearray(header)
+    archive.extend(name_bytes)
+    archive.extend(struct.pack("!I", meta_size))
+    archive.extend(meta)
+    archive.extend(struct.pack("!Q", payload_size))
+    archive.extend(payload)
+    
+    return bytes(archive), algorithm_id
 
-def extract_archive(archive_data: bytes) -> tuple[str, bytes]:
+def extract_archive(archive_data: bytes) -> tuple[str, bytes, int]:
+    """Returns (original_filename, decompressed_data, algorithm_id)"""
     if len(archive_data) < HEADER_SIZE:
         raise ArchiveValidationError("Archive is too small (truncated header)")
         
     header_bytes = archive_data[:HEADER_SIZE]
-    magic, version, alg_id, orig_size, orig_crc, meta_size, name_len = struct.unpack(HEADER_STRUCT, header_bytes)
+    magic, version, file_type, alg_id, flags, orig_size, orig_crc, name_len = struct.unpack(HEADER_STRUCT, header_bytes)
     
     if magic != MAGIC:
-        raise ArchiveValidationError("Invalid Zero-Compress magic signature")
+        raise ArchiveValidationError("Invalid Zero-Compress archive.")
     if version != VERSION:
         raise ArchiveValidationError(f"Unsupported archive version: {version}")
         
     offset = HEADER_SIZE
     
     if len(archive_data) < offset + name_len:
-        raise ArchiveValidationError("Archive is truncated (filename missing)")
+        raise ArchiveValidationError("Unexpected end of archive (filename missing).")
         
     name_bytes = archive_data[offset : offset + name_len]
     orig_name = name_bytes.decode('utf-8', errors='replace')
     offset += name_len
     
+    if len(archive_data) < offset + 4:
+        raise ArchiveValidationError("Unexpected end of archive (metadata size missing).")
+        
+    meta_size = struct.unpack("!I", archive_data[offset:offset+4])[0]
+    offset += 4
+    
     if len(archive_data) < offset + meta_size:
-        raise ArchiveValidationError("Archive is truncated (metadata missing)")
+        raise ArchiveValidationError("Invalid metadata boundaries.")
         
     meta = archive_data[offset : offset + meta_size]
     offset += meta_size
     
-    payload = archive_data[offset:]
+    if len(archive_data) < offset + 8:
+        raise ArchiveValidationError("Unexpected end of archive (payload size missing).")
+        
+    payload_size = struct.unpack("!Q", archive_data[offset:offset+8])[0]
+    offset += 8
     
-    if alg_id == ALG_HUFFMAN:
-        decompressed_data = huffman.decompress(meta, payload)
-    elif alg_id == ALG_RLE:
-        decompressed_data = rle.decompress(meta, payload)
-    else:
-        raise ArchiveValidationError(f"Unknown algorithm ID: {alg_id}")
+    if len(archive_data) < offset + payload_size:
+        raise ArchiveValidationError("Payload boundaries invalid.")
+        
+    payload = archive_data[offset : offset + payload_size]
+    
+    codec = get_codec(alg_id)
+    decompressed_data = codec.decompress(meta, payload)
         
     if len(decompressed_data) != orig_size:
-        raise ArchiveValidationError(f"Size mismatch: expected {orig_size}, got {len(decompressed_data)}")
+        raise ArchiveValidationError(f"Decompressed size mismatch: expected {orig_size}, got {len(decompressed_data)}")
         
     actual_crc = zlib.crc32(decompressed_data) & 0xFFFFFFFF
     if actual_crc != orig_crc:
-        raise ArchiveValidationError("CRC verification failed (corrupted data)")
+        raise ArchiveValidationError("CRC verification failed.")
         
-    return orig_name, decompressed_data
+    return orig_name, decompressed_data, alg_id
