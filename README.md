@@ -1,14 +1,15 @@
-# Zero-Compress
+# Zero-Compress (Format-Aware Edition)
 
 A practical desktop-style lossless file compression utility built entirely without third-party dependencies using Python's standard library. 
 
-This project implements standard compression algorithms like Huffman Coding and Run-Length Encoding (RLE) to create a custom binary `.ZC` archive format. 
+This project implements format-aware compression strategies that select the optimal algorithm (ZSTD, LZMA, zlib, custom Huffman, custom RLE, or STORE) based on the user's file type, saving it in a custom `.ZC` archive format.
 
 ## Features
 
 - **Zero Dependencies**: Pure Python standard library implementation.
-- **Huffman & RLE Compression**: Custom-built encoders and decoders.
-- **Custom .ZC Archive Format**: Fully-featured archive format packing magic bytes, algorithm ID, CRC32 checks, metadata, and bit-level payload.
+- **Format-Aware Strategy**: Dynamically picks the best codec depending on the content (e.g. Text vs PDF vs MP4).
+- **Auto Mode Comparison**: For 'Any File Type', compresses using multiple candidate algorithms and selects the smallest valid representation.
+- **Custom .ZC Archive Format**: Fully-featured archive format packing magic bytes, file type ID, algorithm ID, CRC32 checks, metadata, and dynamic payload.
 - **Corruption Detection**: Built-in CRC32 verification ensures files are strictly checked against corruption on decompression.
 - **Interactive UI**: Simple console flow with native `tkinter` GUI file picking. 
 
@@ -18,7 +19,7 @@ This project implements standard compression algorithms like Huffman Coding and 
 ## How to Run
 
 1. Clone or download this repository.
-2. Ensure you have Python installed. You do **not** need to install any external dependencies (e.g. no `pip install` required).
+2. Ensure you have Python installed. You do **not** need to install any external dependencies.
 3. Open a terminal or command prompt and navigate to the project directory:
 
 ```bash
@@ -33,7 +34,7 @@ python run.py
 
 ### Usage Workflow
 
-When you run the application, you will be presented with a simple menu:
+When you run the application, you will be presented with a menu:
 
 ```text
 ========================================
@@ -49,13 +50,11 @@ What would you like to do?
 
 **Compressing a File:**
 1. Type `1` and press Enter.
-2. A file selection dialog will open. Pick any file on your computer (e.g., a `.txt` file, an image, or a binary).
-3. You will be prompted to choose a compression algorithm:
-   - Type `1` for Huffman (default).
-   - Type `2` for Run-Length Encoding (RLE).
-4. The file will be compressed into a `.zc` archive and safely stored in your system's **Downloads** folder.
+2. Select the file profile for your file (TXT, PDF, PNG, JPEG, MP4, or Any File Type).
+3. A file selection dialog will open, filtered appropriately. Pick your file.
+4. The application automatically determines the best compression algorithm and saves the resulting `.zc` archive in your system's **Downloads** folder.
 
 **Decompressing a File:**
 1. Type `2` and press Enter.
 2. A file selection dialog will open automatically filtered for `.zc` archives. Pick your compressed file.
-3. The application will decompress it, verify the CRC32 integrity to ensure no data loss, and save the original file back to your system's **Downloads** folder.
+3. The application will decode it using the algorithm specified in the archive, verify the CRC32 integrity, and save the original file back to your system's **Downloads** folder.

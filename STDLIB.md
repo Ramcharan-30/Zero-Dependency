@@ -9,7 +9,7 @@ This document explicitly lists the Python Standard Library components we used as
 - **Binary packing** -> `struct`
     - **Why**: Allows easy translation between Python values and C structs for our custom `.zc` format header.
 - **Priority queue** -> `heapq`
-    - **Why**: Crucial for optimally building the Huffman tree in $O(N \log N)$ time.
+    - **Why**: Crucial for optimally building the custom Huffman tree in $O(N \log N)$ time.
 - **Frequency counting** -> `collections.Counter`
     - **Why**: Simplifies calculating byte frequencies across the file.
 - **CRC32** -> `zlib.crc32`
@@ -20,5 +20,9 @@ This document explicitly lists the Python Standard Library components we used as
     - **Why**: High-resolution clock perfect for tracking compression performance.
 - **Filesystem / Paths** -> `pathlib` / `os`
     - **Why**: Used for cross-platform file path resolution, particularly determining the user's Downloads directory.
-- **Bit array / Bit manipulations** -> Hand-written `BitWriter` and `BitReader`
-    - **Why**: Built-in Python doesn't have an exact equivalent, but we implemented these natively to handle bit-level Huffman streams.
+- **General compression** -> `compression.zstd` (via fallback or native), `lzma`, `zlib`
+    - **Why**: Used as standard-library compression candidates for our format-aware profile system.
+- **Bit array / manipulations** -> Hand-written `BitWriter` and `BitReader`
+    - **Why**: Used internally by our custom Huffman algorithm to handle bit-level streaming.
+
+**Note:** The Huffman and RLE encoders, the `BitWriter/BitReader` classes, and the `.ZC` custom archive format were built entirely from scratch by the team.
