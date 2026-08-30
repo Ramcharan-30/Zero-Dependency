@@ -1,0 +1,393 @@
+========================================
+   ZEROSHRINK - ADAPTIVE LOSSLESS SUITE
+   Zero Dependencies - Stdlib Edition  
+========================================
+
+What would you like to do?
+1. Compress a file
+2. Decompress a .zc file
+3. Exit
+
+Select an option [1-3]: 1
+
+[Compress Mode - Adaptive Strategy]
+
+Select target profile / category:
+1. Text (.txt, source, logs)
+2. PDF Document (.pdf)
+3. PNG Image (.png)
+4. JPEG Image (.jpg / .jpeg)
+5. MP4 Video (.mp4)
+6. Structured Binary (.bin / telemetry)
+7. Any File (Auto-Detect Adaptive)
+Select an option [1-7]: 2
+
+Processing file: SIH.pdf (285.55 KB)
+Profiling content & evaluating candidates... (Please wait)
+
+=========================================
+        ZEROSHRINK ADAPTIVE RESULT       
+=========================================
+File:         SIH.pdf
+Original:     285.55 KB
+Profile:      PDF Document
+
+Analysis:
+  Entropy     : 7.96 bits/byte
+  Diversity   : 100.0%
+  Repetition  : NORMAL
+  Mode        : ADAPTIVE (Content-based)
+
+Evaluated Candidates:
+  Store                 285.63 KB
+  Zstd                  279.48 KB  < BEST
+
+Selected Strategy:
+  Transform   : NONE
+  Codec       : Zstd
+  Final .ZC   : 279.48 KB
+  Space saved : 2.13%
+  Time taken  : 0.0259s
+
+Verification:
+  CRC32       : PASS
+  SHA-256     : PASS
+
+Output saved to:
+  C:\Users\Praneeth Tadi\Downloads\SIH (1).zc
+
+What would you like to do?
+1. Compress a file
+2. Decompress a .zc file
+3. Exit
+
+Select an option [1-3]: 1
+
+[Compress Mode - Adaptive Strategy]
+
+Select target profile / category:
+1. Text (.txt, source, logs)
+2. PDF Document (.pdf)
+3. PNG Image (.png)
+4. JPEG Image (.jpg / .jpeg)
+5. MP4 Video (.mp4)
+6. Structured Binary (.bin / telemetry)
+7. Any File (Auto-Detect Adaptive)
+Select an option [1-7]: 3
+
+Processing file: excel_screenshot.png (44.26 KB)
+Profiling content & evaluating candidates... (Please wait)
+
+=========================================
+        ZEROSHRINK ADAPTIVE RESULT       
+=========================================
+File:         excel_screenshot.png
+Original:     44.26 KB
+Profile:      PNG Image
+
+Analysis:
+  Entropy     : 7.90 bits/byte
+  Diversity   : 100.0%
+  Repetition  : NORMAL
+  Mode        : ADAPTIVE (Content-based)
+
+Evaluated Candidates:
+  Store                  44.35 KB
+  Zstd                   35.42 KB  < BEST
+
+Selected Strategy:
+  Transform   : NONE
+  Codec       : Zstd
+  Final .ZC   : 35.42 KB
+  Space saved : 19.97%
+  Time taken  : 0.0181s
+
+Verification:
+  CRC32       : PASS
+  SHA-256     : PASS
+
+Output saved to:
+  C:\Users\Praneeth Tadi\Downloads\excel_screenshot.zc
+
+What would you like to do?
+1. Compress a file
+2. Decompress a .zc file
+3. Exit
+
+Select an option [1-3]: 2
+
+[Decompress Mode - Verified Extraction]
+Selected archive: excel_screenshot.zc
+Decompressing & verifying integrity... (Please wait)
+
+=========================================
+         DECOMPRESSION COMPLETE          
+=========================================
+Archive:       excel_screenshot.zc
+Codec:         Zstd
+Transform:     NONE
+Restored size: 44.26 KB
+Time taken:    0.0003s
+
+Verification:
+  Size Check  : PASS
+  CRC32       : PASS
+  SHA-256     : PASS
+  Byte exact  : PASS
+
+Restored output saved to:
+  C:\Users\Praneeth Tadi\Downloads\excel_screenshot (1).png
+
+What would you like to do?
+1. Compress a file
+2. Decompress a .zc file
+3. Exit
+
+Select an option [1-3]: 1
+
+[Compress Mode - Adaptive Strategy]
+
+Select target profile / category:
+1. Text (.txt, source, logs)
+2. PDF Document (.pdf)
+3. PNG Image (.png)
+4. JPEG Image (.jpg / .jpeg)
+5. MP4 Video (.mp4)
+6. Structured Binary (.bin / telemetry)
+7. Any File (Auto-Detect Adaptive)
+Select an option [1-7]: 2
+
+Processing file: Module02-ControlChart_all.pdf (2.61 MB)
+Profiling content & evaluating candidates... (Please wait)
+
+=========================================
+        ZEROSHRINK ADAPTIVE RESULT       
+=========================================
+File:         Module02-ControlChart_all.pdf
+Original:     2.61 MB
+Profile:      PDF Document
+
+Analysis:
+  Entropy     : 6.90 bits/byte
+  Diversity   : 100.0%
+  Repetition  : HIGH
+  Mode        : ADAPTIVE (Content-based)
+
+Evaluated Candidates:
+  Store                   2.61 MB
+  Zstd                    1.98 MB
+  RLE_TRANSFORM + Zstd    2.00 MB
+  Lzma                    1.95 MB  < BEST
+  Rle                     5.07 MB
+
+Selected Strategy:
+  Transform   : NONE
+  Codec       : Lzma
+  Final .ZC   : 1.95 MB
+  Space saved : 25.05%
+  Time taken  : 0.9483s
+
+Verification:
+  CRC32       : PASS
+  SHA-256     : PASS
+
+Output saved to:
+  C:\Users\Praneeth Tadi\Downloads\Module02-ControlChart_all.zc
+
+What would you like to do?
+1. Compress a file
+2. Decompress a .zc file
+3. Exit
+
+Select an option [1-3]: 1
+
+[Compress Mode - Adaptive Strategy]
+
+Select target profile / category:
+1. Text (.txt, source, logs)
+2. PDF Document (.pdf)
+3. PNG Image (.png)
+4. JPEG Image (.jpg / .jpeg)
+5. MP4 Video (.mp4)
+6. Structured Binary (.bin / telemetry)
+7. Any File (Auto-Detect Adaptive)
+Select an option [1-7]: 2
+
+Processing file: Module04_Graphical_ToolsQC.pdf (3.59 MB)
+Profiling content & evaluating candidates... (Please wait)
+
+=========================================
+        ZEROSHRINK ADAPTIVE RESULT       
+=========================================
+File:         Module04_Graphical_ToolsQC.pdf
+Original:     3.59 MB
+Profile:      PDF Document
+
+Analysis:
+  Entropy     : 6.90 bits/byte
+  Diversity   : 100.0%
+  Repetition  : HIGH
+  Mode        : ADAPTIVE (Content-based)
+
+Evaluated Candidates:
+  Store                   3.59 MB
+  Zstd                    3.11 MB
+  RLE_TRANSFORM + Zstd    3.15 MB
+  Lzma                    3.06 MB  < BEST
+  Rle                     6.98 MB
+
+Selected Strategy:
+  Transform   : NONE
+  Codec       : Lzma
+  Final .ZC   : 3.06 MB
+  Space saved : 14.84%
+  Time taken  : 1.4576s
+
+Verification:
+  CRC32       : PASS
+  SHA-256     : PASS
+
+Output saved to:
+  C:\Users\Praneeth Tadi\Downloads\Module04_Graphical_ToolsQC.zc
+
+What would you like to do?
+1. Compress a file
+2. Decompress a .zc file
+3. Exit
+
+Select an option [1-3]: 1
+
+[Compress Mode - Adaptive Strategy]
+
+Select target profile / category:
+1. Text (.txt, source, logs)
+2. PDF Document (.pdf)
+3. PNG Image (.png)
+4. JPEG Image (.jpg / .jpeg)
+5. MP4 Video (.mp4)
+6. Structured Binary (.bin / telemetry)
+7. Any File (Auto-Detect Adaptive)
+Select an option [1-7]: 7
+
+Processing file: Antigravity-x64.exe (140.87 MB)
+Profiling content & evaluating candidates... (Please wait)
+
+=========================================
+        ZEROSHRINK ADAPTIVE RESULT       
+=========================================
+File:         Antigravity-x64.exe
+Original:     140.87 MB
+Profile:      Adaptive Auto-Detect
+
+Analysis:
+  Entropy     : 7.70 bits/byte
+  Diversity   : 100.0%
+  Repetition  : NORMAL
+  Mode        : ADAPTIVE (Content-based)
+
+Evaluated Candidates:
+  Store                 140.87 MB
+  Zstd                  140.87 MB  < BEST
+
+Selected Strategy:
+  Transform   : NONE
+  Codec       : Zstd
+  Final .ZC   : 140.87 MB
+  Space saved : 0.00%
+  Time taken  : 0.3792s
+
+Verification:
+  CRC32       : PASS
+  SHA-256     : PASS
+
+Output saved to:
+  C:\Users\Praneeth Tadi\Downloads\Antigravity-x64.zc
+
+What would you like to do?
+1. Compress a file
+2. Decompress a .zc file
+3. Exit
+
+Select an option [1-3]: 1
+
+[Compress Mode - Adaptive Strategy]
+
+Select target profile / category:
+1. Text (.txt, source, logs)
+2. PDF Document (.pdf)
+3. PNG Image (.png)
+4. JPEG Image (.jpg / .jpeg)
+5. MP4 Video (.mp4)
+6. Structured Binary (.bin / telemetry)
+7. Any File (Auto-Detect Adaptive)
+Select an option [1-7]: 7
+
+Processing file: Install VALORANT (1).exe (71.67 MB)
+Profiling content & evaluating candidates... (Please wait)
+
+=========================================
+        ZEROSHRINK ADAPTIVE RESULT       
+=========================================
+File:         Install VALORANT (1).exe
+Original:     71.67 MB
+Profile:      Adaptive Auto-Detect
+
+Analysis:
+  Entropy     : 7.61 bits/byte
+  Diversity   : 100.0%
+  Repetition  : HIGH
+  Mode        : ADAPTIVE (Content-based)
+
+Evaluated Candidates:
+  Store                  71.67 MB
+  Zstd                   64.54 MB  < BEST
+
+Selected Strategy:
+  Transform   : NONE
+  Codec       : Zstd
+  Final .ZC   : 64.54 MB
+  Space saved : 9.95%
+  Time taken  : 0.2851s
+
+Verification:
+  CRC32       : PASS
+  SHA-256     : PASS
+
+Output saved to:
+  C:\Users\Praneeth Tadi\Downloads\Install VALORANT (1).zc
+
+What would you like to do?
+1. Compress a file
+2. Decompress a .zc file
+3. Exit
+
+Select an option [1-3]: 2
+
+[Decompress Mode - Verified Extraction]
+Selected archive: Install VALORANT (1).zc
+Decompressing & verifying integrity... (Please wait)
+
+=========================================
+         DECOMPRESSION COMPLETE          
+=========================================
+Archive:       Install VALORANT (1).zc
+Codec:         Zstd
+Transform:     NONE
+Restored size: 71.67 MB
+Time taken:    0.0970s
+
+Verification:
+  Size Check  : PASS
+  CRC32       : PASS
+  SHA-256     : PASS
+  Byte exact  : PASS
+
+Restored output saved to:
+  C:\Users\Praneeth Tadi\Downloads\Install VALORANT (1) (1).exe
+
+What would you like to do?
+1. Compress a file
+2. Decompress a .zc file
+3. Exit
+
+Select an option [1-3]: 
