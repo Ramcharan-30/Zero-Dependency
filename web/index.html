@@ -1,10 +1,169 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZeroShrink — Zero-Dependency Lossless Compression</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div class="container">
+        <!-- HERO -->
+        <header class="hero">
+            <div class="badge">Zero Dependency Hackathon 2026 — Track F</div>
+            <h1>ZeroShrink</h1>
+            <p class="tagline">Adaptive Lossless Compression. Powered entirely by the Python Standard Library.</p>
+            <div class="dep-proof-mini">
+                <span class="dep-zero">Third-party dependencies: 0</span>
+                <span class="dep-ok">✓ requirements.txt is empty</span>
+            </div>
+        </header>
 
+        <!-- UPLOAD -->
+        <section class="panel" id="uploadPanel">
+            <div class="dropzone" id="dropZone">
+                <input type="file" id="fileInput" hidden>
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/>
+                    <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                <p><strong>Drop a file here</strong> or click to browse</p>
+                <small>TXT, CSV, JSON, BMP, binary — any file up to 20 MB</small>
+            </div>
+            <div id="fileInfo" class="file-info hidden">
+                <span id="fName"></span>
+                <span id="fSize" class="muted"></span>
+            </div>
+        </section>
+
+        <!-- COMPRESS BUTTON -->
+        <section class="panel hidden" id="actionPanel">
+            <button id="compressBtn" class="btn btn-primary">
+                <span class="spinner hidden" id="compSpinner"></span>
+                COMPRESS
+            </button>
+            <p class="hint">Runs real RLE, Huffman, Zlib, LZMA, BZ2, ZSTD, Delta, and Shuffle transforms. Picks the winner.</p>
+        </section>
+
+        <!-- RESULTS -->
+        <section class="panel hidden" id="resultsPanel">
+            <h2>Compression Results</h2>
+
+            <div class="winner-card" id="winnerCard">
+                <div class="winner-label">🏆 Winning Strategy</div>
+                <div class="winner-name" id="winnerName">--</div>
+                <div class="big-number" id="savedPct">--%</div>
+                <div class="big-label" id="bigLabel">space saved</div>
+            </div>
+
+            <div class="metrics">
+                <div class="metric">
+                    <label>Original</label>
+                    <span id="origSize">--</span>
+                </div>
+                <div class="metric">
+                    <label>Compressed</label>
+                    <span id="compSize">--</span>
+                </div>
+                <div class="metric">
+                    <label>Ratio</label>
+                    <span id="compRatio">--</span>
+                </div>
+                <div class="metric">
+                    <label>Time</label>
+                    <span id="compTime">--</span>
+                </div>
+            </div>
+
+            <!-- Candidate Table -->
+            <div class="table-wrap">
+                <h3>Candidate Evaluation</h3>
+                <table id="candTable">
+                    <thead>
+                        <tr><th>Strategy</th><th>Size</th><th>Saved</th><th>Status</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <!-- Profile -->
+            <div class="profile-box" id="profileBox">
+                <h3>Byte Profile</h3>
+                <div class="profile-grid" id="profileGrid"></div>
+            </div>
+
+            <!-- Download -->
+            <div class="actions">
+                <button id="dlCompBtn" class="btn btn-success">⬇ Download .ZC Archive</button>
+            </div>
+        </section>
+
+        <!-- DECOMPRESS / VERIFY -->
+        <section class="panel hidden" id="verifyPanel">
+            <h2>Verify Losslessness</h2>
+            <p class="hint">Upload the .ZC archive you just downloaded to decompress and verify byte-for-byte integrity.</p>
+            <div class="dropzone small" id="verifyDropZone">
+                <input type="file" id="verifyInput" accept=".zc" hidden>
+                <p>Drop your <strong>.zc</strong> file here</p>
+            </div>
+            <button id="decompressBtn" class="btn btn-secondary hidden">
+                <span class="spinner hidden" id="decSpinner"></span>
+                DECOMPRESS & VERIFY
+            </button>
+            <div id="verifyResult" class="verify-result hidden">
+                <div class="verify-badge" id="verifyBadge">✓ LOSSLESS VERIFIED</div>
+                <div class="verify-details" id="verifyDetails"></div>
+                <button id="dlRestoredBtn" class="btn btn-success">⬇ Download Restored File</button>
+            </div>
+        </section>
+
+        <!-- HOW IT WORKS -->
+        <section class="panel info-panel">
+            <h2>How It Works</h2>
+            <div class="pipeline">
+                <div class="pipe-step">Input File<br><small>Any bytes</small></div>
+                <div class="pipe-arrow">→</div>
+                <div class="pipe-step">Byte Profiler<br><small>Entropy, patterns, signatures</small></div>
+                <div class="pipe-arrow">→</div>
+                <div class="pipe-step">Transform<br><small>Delta, RLE, Shuffle</small></div>
+                <div class="pipe-arrow">→</div>
+                <div class="pipe-step">Codec<br><small>Huffman, Zlib, LZMA, BZ2, ZSTD</small></div>
+                <div class="pipe-arrow">→</div>
+                <div class="pipe-step">.ZC Archive<br><small>CRC32 + SHA-256</small></div>
+                <div class="pipe-arrow">→</div>
+                <div class="pipe-step">Verify<br><small>Byte-for-byte exact</small></div>
+            </div>
+        </section>
+
+        <!-- ZERO DEPENDENCY PROOF -->
+        <section class="panel info-panel">
+            <h2>Zero Dependency Proof</h2>
+            <div class="dep-grid">
+                <div class="dep-item"><code>struct</code><span>binary serialization</span></div>
+                <div class="dep-item"><code>hashlib</code><span>SHA-256</span></div>
+                <div class="dep-item"><code>zlib</code><span>CRC32 + deflate</span></div>
+                <div class="dep-item"><code>bz2</code><span>Bzip2 codec</span></div>
+                <div class="dep-item"><code>lzma</code><span>LZMA codec</span></div>
+                <div class="dep-item"><code>http.server</code><span>web server</span></div>
+                <div class="dep-item"><code>json</code><span>API payloads</span></div>
+                <div class="dep-item"><code>base64</code><span>binary transport</span></div>
+                <div class="dep-item"><code>pathlib</code><span>safe paths</span></div>
+                <div class="dep-item"><code>argparse</code><span>CLI interface</span></div>
+                <div class="dep-item"><code>tempfile</code><span>safe temp files</span></div>
+                <div class="dep-item"><code>unittest</code><span>test suite</span></div>
+            </div>
+            <p class="muted center">No pip install. No npm install. No packages. Just Python.</p>
+        </section>
+
+        <footer>
+            <a href="https://github.com/Ramcharan-30/Zero-Dependency" target="_blank">View Source on GitHub</a>
+            <span class="muted">|</span>
+            <span class="muted">Built for Zero Dependency Hackathon 2026</span>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
 </body>
 </html>
