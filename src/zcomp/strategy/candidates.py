@@ -5,6 +5,7 @@ from ..transforms import (
     RleTransform,
     Shuffle32Transform,
     Shuffle64Transform,
+    MeshTransform,
     BaseTransform
 )
 from ..codecs import (
@@ -28,6 +29,7 @@ def generate_candidates(profile: ContentProfile) -> list[tuple[BaseTransform, Ba
     rle_t = RleTransform()
     shuf32_t = Shuffle32Transform()
     shuf64_t = Shuffle64Transform()
+    mesh_t = MeshTransform()
 
     store_c = StoreCodec()
     zstd_c = ZstdCodec()
@@ -70,6 +72,18 @@ def generate_candidates(profile: ContentProfile) -> list[tuple[BaseTransform, Ba
         ]
         return candidates
 
+    # 3.5 3D Mesh / Model data
+    # (Checked before structured binary because it's a specific subset)
+    if profile.profile_id == 7: # Profile.MESH3D
+        candidates = [
+            (none_t, store_c),
+            (mesh_t, zstd_c),
+            (mesh_t, lzma_c),
+            (none_t, zstd_c),
+            (shuf32_t, zstd_c)
+        ]
+        return candidates
+
     # 4. Structured binary / numeric data
     if profile.is_structured_binary:
         candidates = [
@@ -78,6 +92,7 @@ def generate_candidates(profile: ContentProfile) -> list[tuple[BaseTransform, Ba
             (delta_t, zstd_c),
             (shuf32_t, zstd_c),
             (shuf64_t, zstd_c),
+            (mesh_t, zstd_c),
             (none_t, lzma_c),
             (none_t, bz2_c)
         ]
@@ -90,6 +105,7 @@ def generate_candidates(profile: ContentProfile) -> list[tuple[BaseTransform, Ba
         (delta_t, zstd_c),
         (rle_t, zstd_c),
         (shuf32_t, zstd_c),
+        (mesh_t, zstd_c),
         (none_t, lzma_c),
         (none_t, bz2_c),
         (none_t, zlib_c),
