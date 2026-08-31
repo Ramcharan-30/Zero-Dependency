@@ -16,5 +16,23 @@
         "ratio": "100.09%",
         "type": "Store",
         "path": "/Users/loksai/Downloads/# ZERO DEPENDENCY HACKATHON \u2014 FULL (1).txt.zshrink.zshrink"
+    },
+    {
+        "id": 3,
+        "filename": "Module03-Process Capability.pdf.zshrink",
+        "original": "1102.91 KB",
+        "compressed": "831.04 KB",
+        "ratio": "75.35%",
+        "type": "LZMA",
+        "path": "C:/Users/Praneeth Tadi/Downloads\\Module03-Process Capability.pdf.zshrink"
+    },
+    {
+        "id": 4,
+        "filename": "Antigravity-x64 (1).exe.zshrink",
+        "original": "144247.88 KB",
+        "compressed": "144223.75 KB",
+        "ratio": "99.98%",
+        "type": "LZMA",
+        "path": "C:/Users/Praneeth Tadi/Downloads\\Antigravity-x64 (1).exe.zshrink"
     }
 ]

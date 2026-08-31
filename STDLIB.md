@@ -5,12 +5,12 @@ This document logs the substitutions made to ensure ZeroShrink has zero third-pa
 | Normal Package | Stdlib / Custom Substitution | Rationale |
 | :--- | :--- | :--- |
 | `zstd` / `lz4` | `zlib`, `lzma`, `bz2` | Used built-in Python compression modules instead of external C-extensions. |
-| `bitstring` | `bin()` + `int(x, 2)` | Native bit-manipulation for the custom Huffman implementation. |
+| `bitstring` | Integer Bit-Buffer & Bit-Shifting | Native bitwise shift arithmetic (`<<`, `>>`, `|`) and bit masks for ultra-fast custom Huffman implementation. |
 | `PriorityQueue` | `heapq` | Used `heapq` for O(log n) tree construction in Huffman coding. |
 | `Pandas` / `Numpy` | `collections.Counter` | Frequency analysis handled by the standard library Counter. |
-| `PyQt` / `Kivy` | `tkinter` | Native GUI toolkit to eliminate massive binary dependencies. |
-| `PyYAML` / `json` | `pickle` | Binary serialization for the Huffman mapping metadata. |
+| `PyQt` / `Kivy` | `tkinter` / `ttk` | Native GUI toolkit with `ttk.Progressbar` and multi-threaded event handlers to eliminate massive binary dependencies. |
+| `celery` / `threading` | `threading.Thread` | Native Python daemon threads for non-blocking file compression and extraction operations. |
+| `PyYAML` / `json` | `pickle` + `json` | Binary serialization for Huffman metadata and history tracking via standard `json`. |
 | `argparse` | `sys.argv` | Direct system argument access for lightweight CLI interactions. |
-| `hashlib` (ext) | `hashlib` (std) | Used stdlib SHA-256 for integrity verification. |
-| `pathlib` (ext) | `os.path` | Stuck to fundamental OS primitives for maximum compatibility. |
-| `Loguru` | `sys.stderr` | Standard error streams used for logging to avoid dependency overhead. |
+| `hashlib` / `crc32` | `zlib.crc32` / `hashlib` | Used stdlib CRC32 and SHA-256 for archive integrity verification. |
+| `pathlib` | `os.path` | Fundamental OS primitives for cross-platform compatibility. |
