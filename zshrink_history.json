@@ -1,0 +1,20 @@
+[
+    {
+        "id": 1,
+        "filename": "# ZERO DEPENDENCY HACKATHON \u2014 FULL (1).txt.zshrink",
+        "original": "40.76 KB",
+        "compressed": "14.42 KB",
+        "ratio": "35.38%",
+        "type": "BZ2",
+        "path": "/Users/loksai/Downloads/# ZERO DEPENDENCY HACKATHON \u2014 FULL (1).txt.zshrink"
+    },
+    {
+        "id": 2,
+        "filename": "# ZERO DEPENDENCY HACKATHON \u2014 FULL (1).txt.zshrink.zshrink",
+        "original": "14.42 KB",
+        "compressed": "14.43 KB",
+        "ratio": "100.09%",
+        "type": "Store",
+        "path": "/Users/loksai/Downloads/# ZERO DEPENDENCY HACKATHON \u2014 FULL (1).txt.zshrink.zshrink"
+    }
+]
