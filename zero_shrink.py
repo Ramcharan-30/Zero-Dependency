@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 import os
 import sys
+import argparse
 import struct
 import pickle
 import zlib
@@ -14,6 +15,26 @@ import threading
 import time
 from collections import Counter
 import heapq
+
+# =============================================================================
+# 0. HELPER FUNCTIONS FOR PATH RESOLUTION
+# =============================================================================
+
+# NEW: Helper function to resolve final output path given base path, user dir, and extension.
+def resolve_output_path(base_path, user_dir=None, extension=""):
+    """
+    Determines the final destination path for compressed or extracted files.
+    If user_dir is omitted or None, defaults to current working directory.
+    Creates destination directory using os.makedirs if it does not exist.
+    """
+    dest_dir = user_dir if user_dir else os.getcwd()
+    if not os.path.exists(dest_dir):
+        os.makedirs(dest_dir, exist_ok=True)
+    filename = os.path.basename(base_path)
+    if extension and not filename.endswith(extension):
+        filename += extension
+    return os.path.join(dest_dir, filename)
+
 
 # =============================================================================
 # 1. CORE CODECS & TRANSFORMS (The "Package Killer" Logic)
@@ -154,7 +175,6 @@ class ZeroShrinkEngine:
         elif codec == 1:
             return zlib.compress(processed, level=6), None, 0
         elif codec == 2:
-            # Preset 3 provides fast, high-ratio LZMA compression without freezing
             return lzma.compress(processed, preset=3), None, 0
         elif codec == 3:
             return bz2.compress(processed, compresslevel=6), None, 0
@@ -177,7 +197,6 @@ class ZeroShrinkEngine:
             (Transforms.delta8, 3), (Transforms.delta8, 4)
         ]
 
-        # Fast 64 KB sampling for candidate evaluation on large files
         SAMPLE_SIZE = 64 * 1024
         if len(data) > SAMPLE_SIZE:
             eval_data = data[:SAMPLE_SIZE]
@@ -191,7 +210,6 @@ class ZeroShrinkEngine:
             status_callback("Evaluating compression strategies...")
 
         for trans, codec in candidates:
-            # Micro-sleep to yield Python GIL to main Tkinter thread for smooth GUI repaints
             time.sleep(0.005)
             proc_eval = trans(eval_data) if trans else eval_data
             try:
@@ -215,10 +233,7 @@ class ZeroShrinkEngine:
         processed_full = best_trans(data) if best_trans else data
         final_payload, _, _ = self._encode_candidate(processed_full, best_codec)
 
-        # CRC32 checksum for payload integrity verification
         crc32_val = zlib.crc32(data) & 0xFFFFFFFF
-
-        # Archive Header: [MAGIC 4B][TRANS_ID 1B][CODEC_ID 1B][ORIG_SIZE 8B][CRC32 4B]
         header = struct.pack(">4sBBQI", b"ZSRK", trans_id, codec_id, len(data), crc32_val)
         archive_bytes = header + final_payload
 
@@ -283,19 +298,23 @@ class ZeroShrinkEngine:
 
 
 # =============================================================================
-# 3. GUI LAYER (Super-Responsive Dark Theme with Loading Bar)
+# 3. GUI LAYER (Super-Responsive Dark Theme with Destination Directory Pickers)
 # =============================================================================
 
 class ZeroShrinkGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("ZeroShrink - Lossless Studio")
-        self.root.geometry("900x580")
+        self.root.geometry("920x620")
         self.root.configure(bg="#232323")
 
         self.engine = ZeroShrinkEngine()
         self.history_file = "zshrink_history.json"
         self.history = self.load_history()
+
+        # NEW: Destination folder variables defaulting to current working directory
+        self.output_dir_var = tk.StringVar(value=os.getcwd())
+        self.extract_dir_var = tk.StringVar(value=os.getcwd())
 
         self.is_processing = False
 
@@ -322,7 +341,6 @@ class ZeroShrinkGUI:
         style = ttk.Style()
         style.theme_use('clam')
 
-        # Treeview Styling - Matches dark studio layout
         style.configure("Treeview",
                         background="#333333",
                         foreground="white",
@@ -336,7 +354,6 @@ class ZeroShrinkGUI:
                         font=("Segoe UI", 10, "bold"))
         style.map("Treeview", background=[('selected', '#4a90e2')])
 
-        # Progressbar Styling
         style.configure("Custom.Horizontal.TProgressbar",
                         troughcolor="#2d2d2d",
                         background="#4a90e2",
@@ -345,7 +362,7 @@ class ZeroShrinkGUI:
 
         # Top Toolbar
         toolbar = tk.Frame(self.root, bg="#2d2d2d")
-        toolbar.pack(side="top", fill="x", padx=20, pady=15)
+        toolbar.pack(side="top", fill="x", padx=20, pady=(15, 5))
 
         btn_style = {
             "bg": "white",
@@ -368,6 +385,33 @@ class ZeroShrinkGUI:
 
         self.btn_refresh = tk.Button(toolbar, text="Refresh", command=self.refresh_table, **btn_style)
         self.btn_refresh.pack(side="right", padx=5)
+
+        # NEW: Destination Folders Selection Toolbar
+        dest_frame = tk.Frame(self.root, bg="#2d2d2d", pady=8, padx=15)
+        dest_frame.pack(side="top", fill="x", padx=20, pady=(5, 10))
+
+        # Compression Output Folder Controls
+        lbl_comp = tk.Label(dest_frame, text="Destination Folder:", bg="#2d2d2d", fg="#cccccc", font=("Segoe UI", 9, "bold"))
+        lbl_comp.grid(row=0, column=0, sticky="w", padx=(0, 5), pady=3)
+
+        entry_comp = tk.Entry(dest_frame, textvariable=self.output_dir_var, bg="#333333", fg="white", insertbackground="white", relief="flat", font=("Segoe UI", 9))
+        entry_comp.grid(row=0, column=1, sticky="ew", padx=5, pady=3)
+
+        btn_browse_comp = tk.Button(dest_frame, text="Browse", command=self.browse_output_dir, bg="white", fg="black", relief="flat", padx=10, font=("Segoe UI", 8, "bold"), cursor="hand2")
+        btn_browse_comp.grid(row=0, column=2, padx=(5, 20), pady=3)
+
+        # Decompression Extraction Folder Controls
+        lbl_ext = tk.Label(dest_frame, text="Extract To:", bg="#2d2d2d", fg="#cccccc", font=("Segoe UI", 9, "bold"))
+        lbl_ext.grid(row=0, column=3, sticky="w", padx=(0, 5), pady=3)
+
+        entry_ext = tk.Entry(dest_frame, textvariable=self.extract_dir_var, bg="#333333", fg="white", insertbackground="white", relief="flat", font=("Segoe UI", 9))
+        entry_ext.grid(row=0, column=4, sticky="ew", padx=5, pady=3)
+
+        btn_browse_ext = tk.Button(dest_frame, text="Browse", command=self.browse_extract_dir, bg="white", fg="black", relief="flat", padx=10, font=("Segoe UI", 8, "bold"), cursor="hand2")
+        btn_browse_ext.grid(row=0, column=5, padx=(5, 0), pady=3)
+
+        dest_frame.columnconfigure(1, weight=1)
+        dest_frame.columnconfigure(4, weight=1)
 
         # Table Area
         table_frame = tk.Frame(self.root, bg="#232323")
@@ -402,6 +446,18 @@ class ZeroShrinkGUI:
         self.status_var = tk.StringVar(value="Ready.")
         self.status_label = tk.Label(self.status_bar, textvariable=self.status_var, bg="#2d2d2d", fg="#e0e0e0", font=("Segoe UI", 9, "bold"))
         self.status_label.pack(side="left")
+
+    # NEW: Browse folder dialog handler for compression destination
+    def browse_output_dir(self):
+        folder = filedialog.askdirectory(initialdir=self.output_dir_var.get())
+        if folder:
+            self.output_dir_var.set(folder)
+
+    # NEW: Browse folder dialog handler for decompression extraction destination
+    def browse_extract_dir(self):
+        folder = filedialog.askdirectory(initialdir=self.extract_dir_var.get())
+        if folder:
+            self.extract_dir_var.set(folder)
 
     def set_busy(self, busy=True, message="Processing..."):
         self.is_processing = busy
@@ -462,8 +518,10 @@ class ZeroShrinkGUI:
                 return_type=True,
                 status_callback=self.update_status
             )
-            filename = os.path.basename(path)
-            save_path = os.path.join(os.path.dirname(path), filename + ".zshrink")
+            
+            # CHANGED: Use resolve_output_path to place output in selected destination folder
+            target_dir = self.output_dir_var.get()
+            save_path = resolve_output_path(path, target_dir, ".zshrink")
 
             with open(save_path, 'wb') as f:
                 f.write(compressed)
@@ -474,7 +532,7 @@ class ZeroShrinkGUI:
 
             record = {
                 "id": len(self.history) + 1,
-                "filename": filename + ".zshrink",
+                "filename": os.path.basename(save_path),
                 "original": f"{orig_size / 1024:.2f} KB",
                 "compressed": f"{comp_size / 1024:.2f} KB",
                 "ratio": f"{ratio:.2f}%",
@@ -491,7 +549,7 @@ class ZeroShrinkGUI:
         self.save_history()
         self.refresh_table()
         self.set_busy(False, f"✔ Compressed {orig_size / 1024:.1f}KB -> {comp_size / 1024:.1f}KB ({record['type']})")
-        messagebox.showinfo("Success", "File compressed and recorded successfully!")
+        messagebox.showinfo("Success", f"File compressed to:\n{record['path']}")
 
     def handle_extract(self):
         selected = self.tree.selection()
@@ -506,7 +564,22 @@ class ZeroShrinkGUI:
         if not record:
             return
 
-        save_path = filedialog.asksaveasfilename(title="Save Decompressed File")
+        # CHANGED: Use selected extraction folder as initial directory in filedialog or default extract path
+        target_dir = self.extract_dir_var.get()
+        if not os.path.exists(target_dir):
+            os.makedirs(target_dir, exist_ok=True)
+
+        default_name = record['filename']
+        if default_name.endswith(".zshrink"):
+            default_name = default_name[:-8]
+        elif default_name.endswith(".zc"):
+            default_name = default_name[:-3]
+
+        save_path = filedialog.asksaveasfilename(
+            title="Save Decompressed File",
+            initialdir=target_dir,
+            initialfile=default_name
+        )
         if not save_path:
             return
 
@@ -523,13 +596,13 @@ class ZeroShrinkGUI:
             )
             with open(save_path, 'wb') as f:
                 f.write(decompressed)
-            self.root.after(0, self._on_extract_done)
+            self.root.after(0, self._on_extract_done, save_path)
         except Exception as e:
             self.root.after(0, self._on_worker_error, str(e))
 
-    def _on_extract_done(self):
+    def _on_extract_done(self, save_path):
         self.set_busy(False, "✔ File extracted successfully!")
-        messagebox.showinfo("Success", "File extracted successfully!")
+        messagebox.showinfo("Success", f"File extracted to:\n{save_path}")
 
     def _on_worker_error(self, err_msg):
         self.set_busy(False, "❌ Error encountered.")
@@ -551,7 +624,89 @@ class ZeroShrinkGUI:
             self.status_var.set("Record deleted.")
 
 
+# =============================================================================
+# 4. CLI AND ENTRY POINT
+# =============================================================================
+
+# NEW: CLI Entry Point & Subcommand Processing
+def main():
+    parser = argparse.ArgumentParser(description="ZeroShrink - Zero-Dependency Lossless Compression Studio")
+    subparsers = parser.add_subparsers(dest="command", help="Subcommands: compress, decompress")
+
+    # Compress subcommand
+    compress_parser = subparsers.add_parser("compress", help="Compress a file")
+    compress_parser.add_argument("file", help="Path to input file")
+    compress_parser.add_argument("-o", "--output-dir", help="Destination folder for compressed file", default=None)
+
+    # Decompress subcommand
+    decompress_parser = subparsers.add_parser("decompress", help="Decompress an archive")
+    decompress_parser.add_argument("file", help="Path to archive file (.zshrink or .zc)")
+    decompress_parser.add_argument("-x", "--extract-dir", help="Destination folder for extracted file", default=None)
+    decompress_parser.add_argument("-out", "--output", help="Explicit output filename (optional)", default=None)
+
+    args = parser.parse_args()
+
+    if args.command == "compress":
+        engine = ZeroShrinkEngine()
+        input_path = args.file
+        if not os.path.exists(input_path):
+            print(f"Error: File '{input_path}' not found.", file=sys.stderr)
+            sys.exit(1)
+
+        with open(input_path, "rb") as f:
+            data = f.read()
+
+        compressed, codec_type = engine.compress(data, return_type=True)
+        
+        # Check if output file has .zshrink or .zc extension
+        out_path = resolve_output_path(input_path, args.output_dir, ".zshrink")
+
+        with open(out_path, "wb") as f:
+            f.write(compressed)
+
+        print(f"Compressed '{input_path}' -> '{out_path}' ({len(data)} -> {len(compressed)} bytes, Codec: {codec_type})")
+        sys.exit(0)
+
+    elif args.command == "decompress":
+        engine = ZeroShrinkEngine()
+        archive_path = args.file
+        if not os.path.exists(archive_path):
+            print(f"Error: Archive file '{archive_path}' not found.", file=sys.stderr)
+            sys.exit(1)
+
+        with open(archive_path, "rb") as f:
+            archive = f.read()
+
+        decompressed = engine.decompress(archive)
+
+        base_name = os.path.basename(archive_path)
+        if base_name.endswith(".zshrink"):
+            orig_name = base_name[:-8]
+        elif base_name.endswith(".zc"):
+            orig_name = base_name[:-3]
+        else:
+            orig_name = base_name + ".extracted"
+
+        if args.output:
+            orig_name = os.path.basename(args.output)
+
+        target_dir = args.extract_dir if args.extract_dir else os.getcwd()
+        if not os.path.exists(target_dir):
+            os.makedirs(target_dir, exist_ok=True)
+
+        out_path = os.path.join(target_dir, orig_name)
+        with open(out_path, "wb") as f:
+            f.write(decompressed)
+
+        print(f"Decompressed '{archive_path}' -> '{out_path}' ({len(decompressed)} bytes)")
+        sys.exit(0)
+
+    else:
+        # Launch GUI if no subcommand is passed
+        root = tk.Tk()
+        app = ZeroShrinkGUI(root)
+        root.mainloop()
+
+
 if __name__ == "__main__":
-    root = tk.Tk()
-    app = ZeroShrinkGUI(root)
-    root.mainloop()
+    main()
