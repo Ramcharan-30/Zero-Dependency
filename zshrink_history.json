@@ -34,5 +34,14 @@
         "ratio": "99.98%",
         "type": "LZMA",
         "path": "C:/Users/Praneeth Tadi/Downloads\\Antigravity-x64 (1).exe.zshrink"
+    },
+    {
+        "id": 5,
+        "filename": "Antigravity-x64 (1).exe.zshrink",
+        "original": "144247.88 KB",
+        "compressed": "144223.75 KB",
+        "ratio": "99.98%",
+        "type": "LZMA",
+        "path": "C:/Users/Praneeth Tadi/Downloads\\Antigravity-x64 (1).exe.zshrink"
     }
 ]
