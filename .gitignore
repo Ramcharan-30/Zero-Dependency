@@ -1,5 +1,9 @@
-.claude
+# Python bytecode
 __pycache__/
-*.py[cod]
-*$py.class
-*.db
+*.pyc
+*.pyo
+*.pyd
+.claude
+# Default ignored files
+/shelf/
+/workspace.xml
