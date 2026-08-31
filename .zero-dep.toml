@@ -1,0 +1,4 @@
+title = "ZeroShrink"
+pitch = "An adaptive lossless compression studio built entirely from the Python Standard Library with zero dependencies."
+track = "Single File / Package Killer"
+version = "1.0.0"
